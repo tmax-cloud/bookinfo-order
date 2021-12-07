@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: book-order
+  datasource:
+    url: jdbc:postgresql://${DB_HOSTNAME}:${DB_PORT}/${DB_DATABASE}
+    username: ${DB_USER}
+    password: ${DB_PASS}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    generate-ddl: true
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer : org.apache.kafka.common.serialization.StringSerializer
+
+opentracing:
+  jaeger:
+    udp-sender:
+      host: ${JAEGER_AGENT_HOST}
+      port: ${JAEGER_AGENT_PORT}
+    log-spans: true
