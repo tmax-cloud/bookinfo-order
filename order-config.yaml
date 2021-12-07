@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: order-pvc
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+---
+apiVersion: cicd.tmax.io/v1
+kind: IntegrationConfig
+metadata:
+  name: bookinfo-order-config
+spec:
+  git:
+    type: github
+    apiUrl: 
+    repository: tmax-cloud/bookinfo-order
+    token:
+      valueFrom:
+        secretKeyRef:
+          name: yxzzzxh-git-token
+          key: token
+  workspaces:
+    - name : order-workspace
+      persistentVolumeClaim:
+        claimName: order-pvc
+  secrets:
+    - name : tmaxcloudck-docker-hub-secret
+  jobs:
+    postSubmit:
+      - name: gradle-package
+        image: docker.io/gradle:7.3.1-jdk11
+        script: |
+          gradle build
+          cp $JAR_NAME $(workspaces.order-workspace.path)/$JAR_NAME
+        env: 
+          - name: JAR_NAME
+            value : order.jar
+        when:
+          branch:
+            - test/ci
+      - name: build-and-push
+        image: quay.io/buildah/stable
+        script: |
+          cp $(workspaces.order-workspace.path)/$JAR_NAME ./
+          buildah bud --tls-verify=false --storage-driver=vfs --format docker -f Dockerfile -t $IMG_URL:$IMG_VERSION .
+          buildah push --tls-verify=false --storage-driver=vfs $IMG_URL:$IMG_VERSION docker://$IMG_URL:$IMG_VERSION
+        env:
+          - name: IMG_URL
+            value: tmaxcloudck/example-order
+          - name: IMG_VERSION
+            value: latest
+          - name: JAR_NAME
+            value: order.jar
+        securityContext:
+          privileged: true
+        after:
+          - gradle-package
+        when:
+          branch:
+            - test/ci
