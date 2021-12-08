@@ -15,8 +15,12 @@ configurations {
 
 repositories {
     maven {
-        url "http://localhost:18080/repository/maven-public/"
+        url "http://1458-220-94-163-19.ngrok.io/repository/maven-public/"
         allowInsecureProtocol = true
+		credentials {
+ 			username= 'admin'
+    		password= '123'
+		}
     }
     mavenCentral()
 }

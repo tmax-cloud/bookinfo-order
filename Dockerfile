@@ -1,7 +1,3 @@
-FROM openjdk:11
-
-ADD ./build/libs/order.jar /app/
-
-WORKDIR /app
+FROM docker.io/openjdk:11
 
 CMD ["java", "-jar", "order.jar"]
