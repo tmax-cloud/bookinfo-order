@@ -7,24 +7,21 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class KafkaProducer {
-    private static final Logger log = LoggerFactory.getLogger(KafkaProducer.class);
-
+public class KafkaBookMessageProducer {
+    private static final Logger log = LoggerFactory.getLogger(KafkaBookMessageProducer.class);
     private static final String TOPIC_PURCHASE = "purchase";
     private static final String TOPIC_SALE = "sale";
     private static final String TOPIC_RENT = "rent";
-
     private final KafkaTemplate<String, BookMessage> kafkaTemplate;
 
     @Autowired
-    public KafkaProducer(KafkaTemplate<String, BookMessage> kafkaTemplate) {
+    public KafkaBookMessageProducer(KafkaTemplate<String, BookMessage> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
     public void sendPurchaseMessage(BookMessage msg) {
         log.info(String.format("Produce purchase message : %s", msg));
         this.kafkaTemplate.send(TOPIC_PURCHASE, msg);
-
     }
 
     public void sendSaleMessage(BookMessage msg) {

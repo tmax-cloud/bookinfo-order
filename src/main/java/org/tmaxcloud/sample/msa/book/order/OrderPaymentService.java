@@ -8,7 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import orgltmaxcloud.sample.msa.book.common.models.Payment;
+import org.tmaxcloud.sample.msa.book.common.dto.OrderDto;
+import org.tmaxcloud.sample.msa.book.common.dto.PaymentDto;
 
 @Service
 public class OrderPaymentService {
@@ -18,7 +19,7 @@ public class OrderPaymentService {
     private final OrderPaymentRepository paymentRepository;
     private final RestTemplate restTemplate;
 
-    @Value("${BOOK_PAYMENT_URL}")
+    @Value("${upstream.payment}")
     private String paymentSvcAddr;
 
     public OrderPaymentService(OrderPaymentRepository paymentRepository, RestTemplate restTemplate) {
@@ -30,18 +31,17 @@ public class OrderPaymentService {
     public void issuePaymentID(Order order) {
         log.info("issue payment for order: {}", order.getId());
 
-        ResponseEntity<Payment> response = restTemplate.postForEntity(
-                paymentSvcAddr + "/payments", new Payment(order.getId()), Payment.class);
-
+        ResponseEntity<PaymentDto> response = restTemplate.postForEntity(
+                paymentSvcAddr + "/api/payments", new OrderDto().setId(order.getId()), PaymentDto.class);
         if (HttpStatus.OK != response.getStatusCode()) {
             log.warn("failed to issue payment id for order: {}", order.getId());
             return;
         }
 
-        Payment payment = response.getBody();
-        OrderPayment orderPayment = new OrderPayment(payment.getOrderId(), payment.getId());
-        paymentRepository.save(orderPayment);
+        PaymentDto payment = response.getBody();
+        OrderPayment orderPaymentDto = new OrderPayment(payment.getOrderId(), payment.getId());
+        paymentRepository.save(orderPaymentDto);
 
-        log.info("success to save order payment: {}", orderPayment);
+        log.info("success to save order payment: {}", orderPaymentDto);
     }
 }
