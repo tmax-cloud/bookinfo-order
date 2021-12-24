@@ -1,0 +1,1 @@
+https://github.com/tmax-cloud/bookinfo-core/blob/main/docs/CI.md

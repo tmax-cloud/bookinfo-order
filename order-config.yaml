@@ -191,7 +191,7 @@ spec:
         when:
           tag:
             - v.*
-      - name: image-scann
+      - name: image-scan
         image: docker.io/bitnami/trivy:latest
         script: |
           IMG_TAG=${CI_HEAD_REF#refs/tags/}
