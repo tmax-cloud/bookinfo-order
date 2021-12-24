@@ -124,6 +124,35 @@ spec:
   secrets:
     - name : tmaxcloudck-docker-hub-secret
   jobs:
+    preSubmit:
+      - name: copy-source
+        image: docker.io/alpine:3.13.6
+        script: |
+          cp -r ./src $(workspaces.order-workspace.path)/src
+        when:
+          branch: 
+          - main
+      - name: code-analysis
+        tektonTask:
+          taskRef:
+            local:
+              name: sonarqube-scanner
+              kind: Task
+          params:
+          - name: SONAR_HOST_URL
+            stringVal: http://sonarqube.172.22.11.16.nip.io
+          - name: SONAR_PROJECT_KEY
+            stringVal: order-sonar
+          workspaces:
+          - name: source-dir
+            workspace: order-workspace
+          - name: sonar-settings
+            workspace: sonar-settings
+        after:
+        - copy-source
+        when:
+          branch: 
+          - main
     postSubmit:
       - name: copy-source
         image: docker.io/alpine:3.13.6
