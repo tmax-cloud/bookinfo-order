@@ -8,8 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.tmaxcloud.sample.msa.book.common.dto.OrderDto;
 import org.tmaxcloud.sample.msa.book.common.dto.PaymentDto;
+import reactor.core.publisher.Mono;
 
 @Service
 public class OrderPaymentService {
@@ -17,31 +19,34 @@ public class OrderPaymentService {
     private static final Logger log = LoggerFactory.getLogger(OrderPaymentService.class);
 
     private final OrderPaymentRepository paymentRepository;
-    private final RestTemplate restTemplate;
+    private final WebClient webClient;
 
     @Value("${upstream.payment}")
     private String paymentSvcAddr;
 
-    public OrderPaymentService(OrderPaymentRepository paymentRepository, RestTemplate restTemplate) {
+    public OrderPaymentService(OrderPaymentRepository paymentRepository, WebClient webClient) {
         this.paymentRepository = paymentRepository;
-        this.restTemplate = restTemplate;
+        this.webClient = webClient;
     }
 
-    @Async
     public void issuePaymentID(Order order) {
         log.info("issue payment for order: {}", order.getId());
+        OrderDto newOrder = new OrderDto().setId(order.getId());
 
-        ResponseEntity<PaymentDto> response = restTemplate.postForEntity(
-                paymentSvcAddr + "/api/payments", new OrderDto().setId(order.getId()), PaymentDto.class);
-        if (HttpStatus.OK != response.getStatusCode()) {
+        Mono<PaymentDto> response = webClient.post()
+                .uri(paymentSvcAddr + "/api/payments")
+                .bodyValue(newOrder)
+                .retrieve()
+                .bodyToMono(PaymentDto.class);
+
+
+        response.subscribe(res -> {
+            OrderPayment orderPaymentDto = new OrderPayment(res.getOrderId(), res.getId());
+            paymentRepository.save(orderPaymentDto);
+            log.info("success to save order payment: {}", orderPaymentDto);
+        }, e -> {
             log.warn("failed to issue payment id for order: {}", order.getId());
-            return;
-        }
-
-        PaymentDto payment = response.getBody();
-        OrderPayment orderPaymentDto = new OrderPayment(payment.getOrderId(), payment.getId());
-        paymentRepository.save(orderPaymentDto);
-
-        log.info("success to save order payment: {}", orderPaymentDto);
+        });
+        return;
     }
 }
