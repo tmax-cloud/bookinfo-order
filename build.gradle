@@ -60,6 +60,7 @@ dependencies {
     implementation group: 'com.google.code.gson', name: 'gson', version: '2.7'
     implementation 'org.tmaxcloud.sample.msa.book:common:0.0.1'
     implementation 'org.modelmapper:modelmapper:2.3.5'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     testImplementation 'org.springframework.kafka:spring-kafka-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
